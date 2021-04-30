@@ -83,6 +83,12 @@ public class MemberSch {
 	public void setEndBlock(int endBlock) {
 		this.endBlock = endBlock;
 	}
+	public int getPno() {
+		return pno;
+	}
+	public void setPno(int pno) {
+		this.pno = pno;
+	}
 	
 }
 

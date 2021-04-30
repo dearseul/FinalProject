@@ -336,6 +336,45 @@
 			//////// 직급 변경
 			$("#memShow").on("click",".alertAuth",function(){
 				var pno = $(this).find("[name=alertPno]").val();
+				$("#alert-modal").modal("show"); 
+ 	  			$.ajax({
+ 	  				type:"post",
+ 	  				url:"${path}/manpower.do?method=showAuth",
+ 	  				data:{"pno":pno},
+ 	  				dataType:"json",
+ 	  				success:function(data){
+	 	  					var all = data.memAuth;
+	 	  					console.log(data);
+	 	  					console.log("##직급###");
+	 	  					console.log(all); 	  
+	 	  					var show1="";
+	 	  					var show2="";
+	 	  					$.each(all,function(idx,p){
+	 	  						if(p.auth=='wk'){
+		 	  						show1+="<option value='wk' selected='selected'>wk</option>";
+		 	  						show1+="<option value='pm'>pm</option>";
+	 	  						}
+	 	  						if(p.auth=='pm'){
+		 	  						show1+="<option value='wk'>wk</option>";
+		 	  						show1+="<option value='pm' selected='selected'>pm</option>";
+	 	  						}	 	  
+	 	  						if(p.part=='관리부'){
+		 	  						show2+="<option value='관리부' selected='selected'>관리부</option>";
+		 	  						show2+="<option value='개발부'>개발부</option>";
+	 	  						}
+	 	  						if(p.part=='개발부'){
+		 	  						show2+="<option value='관리부'>관리부</option>";
+		 	  						show2+="<option value='개발부' selected='selected'>개발부</option>";
+	 	  						}	 	  						
+	 	  					});
+	 	  					$("#authShow").html(show1);	
+	 	  					$("#partShow").html(show2);
+	 	  			},
+	 	  			error:function(err){
+	 	  				alert("에러발생:"+err);
+	 	  			}  				
+ 	  			})
+ 	  			
 	  			 $("#alertAuthBtn").on("click",function(){	  				 
 	  				 var part = $("#alert-modal [name=part]").val();
 	  				 var auth = $("#alert-modal [name=auth]").val();
@@ -1170,18 +1209,16 @@
                                                         </div>
                                                             <div class="mb-3">
                                                                 <label for="part" class="form-label">부 서</label>
-                                                                <select name="part" class="form-control">
-                                                                	<option "selected=selected">-- 부서 선택 --</option>
-                                                                	<option>관리부</option>
-                                                                	<option>개발부</option>
+                                                                <select name="part" id="partShow" class="form-control">
+<!--                                                                 	<option>관리부</option>
+                                                                	<option>개발부</option> -->
                                                                 </select>
                                                             </div>    
                                                             <div class="mb-3">
                                                                 <label for="auth" class="form-label">직 급</label>
-                                                                <select name="auth" class="form-control">
-                                                                	<option "selected=selected">-- 직급 선택 --</option>
-                                                                	<option>wk</option>
-                                                                	<option>pm</option>
+                                                                <select name="auth" id="authShow" class="form-control">
+<!--                                                                 	<option>wk</option>
+                                                                	<option>pm</option> -->
                                                                 </select>
                                                             </div>                                                                                                                        
                                                             <div class="mb-3 text-center">

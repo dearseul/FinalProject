@@ -46,6 +46,7 @@ public class ManPowerController {
 		d.addAttribute("partList", service.deptList());
 		d.addAttribute("authList", service.authList());
 		d.addAttribute("memList", service.showMem(sch));
+		d.addAttribute("memAuth", service.memList2(sch.getPno()));
 		return "contacts-list";
 	}
 	
@@ -59,24 +60,6 @@ public class ManPowerController {
 	// http://localhost:7080/pms/manpower.do?method=contacts_list2
 	@RequestMapping(params = "method=contacts_list2")
 	public String memList(@ModelAttribute("sch") MemberSch sch, Model d) {
-		// 가용 인원
-		// pm이나 wk인 직원의 사원번호 가져오기
-		/*
-		 * HashMap<String, String> hm = new HashMap<String, String>(); //
-		 * ArrayList<Integer> pno = service.pnoList(hm); Object[] pnoNum =
-		 * pno.toArray(); // 해당 사원이 맡은 or 맡았던 프로젝트 넘버 가져오기 int[] project_no = new
-		 * int[pnoNum.length]; ArrayList<ProjectAdd> add = new ArrayList<ProjectAdd>();
-		 * System.out.println(pno.size()); // 담당 프로젝트 가져오기, 상태 가져오기 int sum = 0;
-		 * ArrayList<Member> memList2 = new ArrayList<Member>(); for (int i = 0; i <
-		 * pno.size(); i++) { add = service.projectList(pno.get(i)); for (int j = 0; j <
-		 * add.size(); j++) { System.out.println(add.get(j).getProject_no()); String
-		 * status = service.status(add.get(j).getProject_no());
-		 * System.out.println(status); if (status.equals("진행")) { sum++; } } if (sum ==
-		 * 0||project_no==null) { System.out.println("전부 완료인 애들의 사원 번호: " + pno.get(i));
-		 * System.out.println(service.memPoss(pno.get(i)).getName());
-		 * memList2.add(service.memPoss(pno.get(i))); } sum = 0; }
-		 * d.addAttribute("memList2", memList2);
-		 */
 		d.addAttribute("memList2",service.showMem2(sch));
 		d.addAttribute("partList", service.deptList());
 		d.addAttribute("authList", service.authList());		
@@ -155,13 +138,20 @@ public class ManPowerController {
 	public String addProject(Model d) {
 		return "pageJsonReport";
 	}
-	
+	@RequestMapping(params="method=showAuth")
+	public String showAuth(Model d,
+			@RequestParam("pno") int pno) {
+		d.addAttribute("memAuth",service.memList2(pno));
+		return "pageJsonReport";
+	}
 	// http://localhost:7080/pms/manpower.do?method=alertAuth
 	@PostMapping(params="method=alertAuth")
 	public String alertAuth(Model d, Member member) {
 		service.alertAuth(member);
 		return "pageJsonReport";
 	}
+	
+
 	// http://localhost:7080/pms/manpower.do?method=insertProject
 	@PostMapping(params="method=insertProject")
 	public String insertProject(Model d, Member member,
