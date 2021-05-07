@@ -44,8 +44,6 @@
 </style>
 <script type="text/javascript">
 
-
-
 var holder = [];
 var tid = [];
 var arrstart_date = []; 
@@ -53,8 +51,15 @@ var arrend_date = [];
 var leftLimit;
 var rightLimit;
 var names = [];
-   //$(document).ready(function(){
+
 	document.addEventListener("DOMContentLoaded",function(eve){
+		
+		var mem = "${mem.id}";
+		   if(mem==""){
+				alert("세션이 만료되어 로그인화면으로 이동합니다.");
+				location.href="${path}/main.do?method=loginform"; // 세션값 없을 때 바로 로그인폼 이동
+			}
+		
 		var g;
 		// 초기 데이터 가져오기
 	   $.ajax({
@@ -62,11 +67,7 @@ var names = [];
 			url:"${path}/gantt.do?method=data&no="+'${no}',
 			dataType:"json",
 			success:function(data){
-				//g = data.gantt;
 				var tes = data.gantt.substring(8,data.gantt.length-1);
-				//console.log(data.gantt);
-				console.log(tes);
-				
 				var arrayList = new Array(tes);
 				
 				var j = JSON.parse(tes);
@@ -78,12 +79,6 @@ var names = [];
 					}
 					arrstart_date.push(Convertdate(j[i].start_date));
 					arrend_date.push(Convertdate(j[i].end_date));
-					
-					//leftLimit = getFormatDate(arrstart_date);
-					//rightLimit = getFormatDate(arrend_date[0]);
-					
-					//console.log(arrstart_date[i]);
-					//console.log(arrend_date[i]);
 				}
 				leftLimit = arrstart_date[0];
 				rightLimit = arrend_date[0];
@@ -91,16 +86,14 @@ var names = [];
 					var tmp = {key : data.names[j], label : data.names[j]}
 					names.push(tmp);
 				}
-				
-				console.log("####names#####");
-				console.log(names);
 				gantt.parse(data.gantt);
 			},
 			error:function(err){
 				console.log(err);
 			}
 		});
-	   //gantt.config.order_branch = true;
+		
+	   // 완료 프로젝트는 read only 
 	   if("${project.project_status}" == "완료")
 		   gantt.config.readonly = true;
 	   	
@@ -110,6 +103,8 @@ var names = [];
 	   gantt.templates.task_text=function(start, end, task){
 		    return task.title;
 		};
+		
+		// 왼쪽에 보이는 정보(pm 기준)
 		gantt.config.columns = [
 		    {name:"title",       label:"Task name",  width:"*", tree:true },
 		    {name:"start_date", label:"Start time", align:"center" },
@@ -117,18 +112,12 @@ var names = [];
 		    {name:"add",        label:"",           width:44 }
 		];
 		
+	   //  select-option priority 선언
 	   var opts = [
 			{ key:1 , label: 'High'},
 			{ key:2 , label: 'Medium'},
 			{ key:3 , label: 'Low'},
 		];
-	   /*
-	   var name_opts = [
-		   for(var i=0;i<names.length;i++){
-		   		{ key: names[i] , label: names[i] }
-		   }
-	   ];
-	   */
 	   
 		// lightbox 내부 priority 영역 추가
 		gantt.config.lightbox.sections = [
@@ -170,15 +159,14 @@ var names = [];
 		    return "";
 		};
 		
+		// save 버튼 클릭 직후
 		gantt.attachEvent("onLightboxSave", function(id, task, is_new){
 			var t = gantt.getTask(id);
-			console.log(t.parent);
-			console.log(task.parent);
 			if(task.status == "완료"){
 				alert("완료 상태의 태스크는 수정할 수 없습니다.");	
 				return false;
 			}
-			
+			// 유효성 검사
 			if(!task.title){
 		        alert("태스크 제목 작성!!");
 		        return false;
@@ -248,70 +236,16 @@ var names = [];
 				else if(task.end_date > ptask.end_date) { alert("종료일이 부모태스크보다 느립니다"); return false; }	
 				
 			}
-			
 		    return true;
 		});
-		/*
-		gantt.attachEvent("onBeforeTaskChanged", function(id, mode, task){
-		    console.log("####onBeforeTaskChanged#####");
-			var ptask = gantt.getTask(task.parent);
-			console.log(task.start_date);console.log(ptask.start_date);
-			console.log(task.end_date);console.log(ptask.end_date);
-
-		    return true;
-		});
-		*/
+		
 		gantt.attachEvent("onBeforeTaskUpdate", function(id,new_item){
 			console.log("####onBeforeTaskUpdate#####");
 			console.log(id);console.log(new_item);
 			
 		});
 		
-		gantt.attachEvent("onBeforeLightbox", function(id){
-		  	if(id == 1){
-			//gantt.getTask(1).readonly_property = "parent";
-		  		//gantt.config.lightbox.readonly_property = "parent";
-		  		gantt.config.lightbox.readonly_property = "parent";
-		  		gantt.config.readonly_property = "holder";
-		  		//gantt.config.readonly_property = "parent";
-		  		//gantt.config.lightbox.readonly = "holder";
-		  		//gantt.config.lightbox.section_parent.readonly_prop = true;
-		  	}
-		  	//gantt.config.lightbox.section.readonly = true;
-		  	//gantt.config.readonly_property = "parent";
-		  return true;
-		});
-		
-		gantt.attachEvent("onLightbox", function (task_id){
-			console.log("####onLightbox#####");
-			var child = gantt.getChildren(task_id);
-			var task = gantt.getTask(task_id);
-			console.log(task.status);
-			
-			/*
-		    var start = task.start_date; start.setHours(start.getHours() + 9);
-		    var end = task.end_date; end.setHours(end.getHours() + 9);
-		    start = start.toISOString().replace(/T/, ' ').replace(/\..+/, '');
-		    end = end.toISOString().replace(/T/, ' ').replace(/\..+/, '');
-		    console.log(start);console.log(end);
-		    
-		    var left = leftLimit; console.log(left);
-		    var right = rightLimit; console.log(right);
-		    */
-		});
-		
-		/*
-		gantt.attachEvent("onBeforeTaskDisplay", function(id, task){
-		    if (task.priority == "High"){
-		        return true;
-		    }
-		    return false;
-		});
-		*/
-		
-		
 		gantt.attachEvent("onLightboxDelete", function(id){
-			
 		    var task = gantt.getTask(id);
 		    if (task.$level == 0 ){
 		        alert("프로젝트는 삭제할 수 없습니다");
@@ -327,35 +261,22 @@ var names = [];
 		});
 		
 		gantt.attachEvent("onAfterTaskAdd", function(id,item){
-			console.log("####ins######");
-			console.log(id);
-			console.log(item);
 			gantt.deleteTask(id);
 			insertCall(id,item);
 			gantt.refreshData();
-			//gantt.load("${path}/Admin/dist/assets/data/data2.json", "json");
 		});
 		
 		gantt.attachEvent("onAfterTaskUpdate", function(id,item){
 			updateCall(id,item);
 			gantt.refreshData();
-			//gantt.load("${path}/Admin/dist/assets/data/data2.json", "json");
 		});
 		
 		gantt.attachEvent("onAfterTaskDelete", function(id,item){
-			console.log("#####del#####");
-			console.log(id);
-			console.log(item);
+			// 내장 기능으로 인해 TaskAdd 시 2개가 생성됨
 			if(id < 100000000000){
 				deleteTask(id);
 				gantt.refreshData();
 			}
-			//gantt.deleteTask(id);
-			//gantt.load("${path}/Admin/dist/assets/data/data2.json", "json");
-		});
-		
-		gantt.attachEvent("onAfterLightbox", function (id,task){
-			//gantt.load("${path}/Admin/dist/assets/data/data2.json", "json");
 		});
 		
 		gantt.attachEvent("onTaskDrag", function(id, mode, task, original){
@@ -365,7 +286,6 @@ var names = [];
 				var ptask = gantt.getTask(task.parent);
 			    var modes = gantt.config.drag_mode;
 			    if(mode == modes.move || mode == modes.resize){
-			    
 			    	var diff = original.duration*(1000*60*60*24);
 			    	
 			    	if(task.start_date < ptask.start_date){
@@ -385,24 +305,8 @@ var names = [];
 	            child.start_date = new Date(+child.start_date + diff2);
 	            child.end_date = new Date(+child.end_date + diff2);
 	            gantt.refreshTask(child.id, true);
-	        },id );
-		    
-				
-		    
+	        },id );	  
 		});
-		/*
-		gantt.attachEvent("onTaskDrag", function(id, mode, task, original){
-		    var modes = gantt.config.drag_mode;
-		    if(mode == modes.move){
-		        var diff = task.start_date - original.start_date;
-		        gantt.eachTask(function(child){
-		            child.start_date = new Date(+child.start_date + diff);
-		            child.end_date = new Date(+child.end_date + diff);
-		            gantt.refreshTask(child.id, true);
-		        },id );
-		    }
-		});
-		*/
 		//rounds positions of the child items to scale
 		gantt.attachEvent("onAfterTaskDrag", function(id, mode, e){
 		    var modes = gantt.config.drag_mode;
@@ -424,195 +328,45 @@ var names = [];
 			var task = gantt.getTask(id);
 		
 		    if(task.status == "완료"){
-		        return false;      //denies dragging if the global task index is odd
+		        return false;      //denies dragging if task.status == '완료'
 		    }
-		    return true;           //allows dragging if the global task index is even
+		    return true;           //allows dragging if task.status == '진행'
 		});
-		
-		/*
-		
-		var task = gantt.getTask(id);
-	    var child = gantt.getChildren(id);
-		if(task.$level == 1){
-			var stmp = task.start_date; stmp.setDate(task.start_date.getDate() + 1);
-			var etmp = task.end_date; etmp.setDate(task.end_date.getDate() - 1);
-			console.log("########test#########");
-			console.log(stmp);console.log(etmp);
-			for(var i=0;i<child.length;i++){
-				if(task.start_date > child[i].start_date){
-					if(task.start_date > child[i].end_date){
-						child[i].start_date = task.start_date;
-						child[i].end_date = stmp;
-						console.log("########1#########");
-						console.log(child[i].start_date);
-						console.log(child[i].end_date);
-						gantt.updateTask(child[i].id);
-					} else {
-						console.log("########2#########");
-						child[i].start_date = task.start_date;
-						console.log(child[i].start_date);
-						gantt.updateTask(child[i].id);
-					}
-				} else if(task.end_date < child[i].end_date){
-					if(task.end_date < child[i].start_date){
-						console.log("########3#########");	
-					
-						child[i].start_date = etmp;
-						child[i].end_date = task.end_date;
-						console.log(child[i].start_date);
-						console.log(child[i].end_date);
-						gantt.updateTask(child[i].id);
-					} else {
-						console.log("########4#########");	
-					
-						task[i].end_date = task.end_date;
-						console.log(child[i].end_date);
-						gantt.updateTask(child[i].id);
-					}
-				}
-			}
-		}
-		
-		
-		gantt.attachEvent("onAfterTaskMove", function(id, parent, tindex){
-			var task = gantt.getTask(id);
-			updateCall2(id,parent,task);
-			gantt.refreshData();
-		});
-		
-		gantt.attachEvent("onRowDragStart", function(id, target, e) {
-		    drag_id = id;
-		    return true;
-		});
-		
-		gantt.attachEvent("onRowDragEnd", function(id, target) {
-		    drag_id = null;
-		    gantt.render();
-		});
-		 
-		gantt.templates.grid_row_class = function(start, end, task){
-		    if(drag_id && task.id != drag_id){
-		        if(task.$level != gantt.getTask(drag_id).$level)
-		            return "cant-drop";
-		        }
-		    return "";
-		};
-		*/
 		
 		// 테스크 버튼 클릭 시
 		if("${mem.auth}"=='pm'){
 			gantt.config.order_branch = true;
-			
-			
-			// 화면에 수정, 생성, 삭제 버튼 생성
-			/*
-		   var colHeader = '<div class="gantt_grid_head_cell gantt_grid_head_add" onclick="gantt.createTask()"></div>';
-	
-			gantt.config.columns = [
-				{name: "text", tree: true, width: '*', resize: true},
-				{name: "start_date", align: "center", resize: true},
-				{name: "duration", align: "center"},
-				{name: "buttons",label: colHeader,width: 75,template: function (task) {
-					return (
-						'<i class="fa fa-pencil" data-action="edit"></i>' +
-						'<i class="fa fa-plus" data-action="add"></i>' +
-						'<i class="fa fa-times" data-action="delete"></i>'
-						);
-				}}
-			];
-			gantt.attachEvent("onTaskClick", function(id, e){
-				var button = e.target.closest("[data-action]")
-				if(button){
-					var action = button.getAttribute("data-action");
-					switch (action) {
-						case "edit":
-							gantt.showLightbox(id);
-							break;
-						case "add":
-							gantt.createTask({start_date:new Date()},null, id);
-							//gantt.addTask({start_date:new Date()},null, id);
-							break;
-						case "delete":
-							gantt.confirm({
-								title: gantt.locale.labels.confirm_deleting_title,
-								text: gantt.locale.labels.confirm_deleting,
-								callback: function (res) {
-									if (res)
-										gantt.deleteTask(id);
-								}
-							});
-							break;
-					}
-					return false;
-				}
-				return true;
-			});
-			*/
-		} else if("${mem.auth}"=='wk'){
-			
-			/*			
-			gantt.attachEvent("onBeforeTaskDrag", function(id, mode, e){
-		        return false;      //denies dragging if the global task index is odd
-			});
-			*/
+		} else {
 			gantt.config.readonly = true;
 			gantt.config.columns = [
 				{name: "title", tree: true, width: '*', resize: true , label:"title"},
 				{name: "start_date", align: "center", resize: true},
-				//{name: "duration", align: "center"},
 				{name: "holder", align: "center", resize: true, label:"holder"}
 			];
-			/*
-			gantt.attachEvent("onTaskClick", function(id, e){
-				alert("프로젝트 매니저만 이용가능한 서비스입니다.");
-			});
-			*/
+		}
+		/*
+		else if("${mem.auth}"=='wk'){
+			
+			gantt.config.readonly = true;
+			gantt.config.columns = [
+				{name: "title", tree: true, width: '*', resize: true , label:"title"},
+				{name: "start_date", align: "center", resize: true},
+				{name: "holder", align: "center", resize: true, label:"holder"}
+			];
 		} else if("${mem.auth}"=='ceo' || "${mem.auth}"=='hp'){
 			gantt.config.readonly = true;
-			/*		
-			gantt.attachEvent("onBeforeTaskDrag", function(id, mode, e){
-		        return false;      //denies dragging if the global task index is odd
-			});
-			gantt.templates.progress_text=function(start, end, task){
-				  return formatProgress(task)
-			};
-			*/
-			/*
-			gantt.config.columns = [
-				{name: "title", tree: true, width: '*', resize: true, label:"title"},
-				{name: "start_date", align: "center", resize: true},
-				{name: "duration", align: "center"},
-				{name: "holder", align: "center", resize: true, label:"holder"},
-				{name: "progress", align: "center", resize: true, label:"Progress",
-					template: function(task){return formatProgress(task);}}
-			]
-			*/
 			gantt.config.columns = [
 				{name: "title", tree: true, width: '*', resize: true , label:"title"},
 				{name: "start_date", align: "center", resize: true},
-				//{name: "duration", align: "center"},
 				{name: "holder", align: "center", resize: true, label:"holder"}
 			];
-			/*
-			gantt.attachEvent("onTaskClick", function(id, e){
-				alert("프로젝트 매니저만 이용가능한 서비스입니다.");
-			});
-			*/
 		}
-
-
-		
-		
+		*/
 	});// document 끝
 	//task 생성 및 수정
 	function updateCall(id,item){
-		console.log("###updateCall###");	
-		console.log(id);
-		console.log(item);
 			 
 	  var sch = callSch(item);
-	  console.log("##return upt Sch##");
-	  console.log(sch);
 	  $.ajax({
 		  type:"post",
 		  url:"${path}/gantt.do?method=update&no="+'${no}',
@@ -620,13 +374,9 @@ var names = [];
 		  dataType:"json",
 		  success:function(data){
 			  if(data.success=="Y"){
-				  alert("수정 완료");  
-				  console.log(data.gantt);
+				  //alert("수정 완료");  
 				  g = data.gantt;
 					var tes = data.gantt.substring(8,data.gantt.length-1);
-					//console.log(data.gantt);
-					console.log(tes);
-					
 					var arrayList = new Array(tes);
 					holder = [];
 					var j = JSON.parse(tes);
@@ -637,66 +387,6 @@ var names = [];
 						}
 						arrstart_date.push(Convertdate(j[i].start_date));
 						arrend_date.push(Convertdate(j[i].end_date));
-						//leftLimit = getFormatDate(arrstart_date);
-						//rightLimit = getFormatDate(arrend_date[0]);
-						
-						//console.log(arrstart_date[i]);
-						//console.log(arrend_date[i]);
-					}
-					leftLimit = arrstart_date[0];
-					rightLimit = arrend_date[0];
-					names = [];
-					for(var j=0;j<data.names.length;j++) {
-						var tmp = {key : data.names[j], label : data.names[j]}
-						names.push(tmp);
-					}
-					gantt.parse(data.gantt);
-			  }
-		  },
-		  error:function(err){
-			  alert("에러발생: " + err);
-			  console.log(err);
-		  }
-	  });
-	}
-	
-	function updateCall2(id,parent,task){
-		console.log("###updateCall###");	
-		console.log(id);
-		console.log(parent);
-			 
-	  var sch = callSch2(id,parent,task);
-	  //console.log("##return upt Sch##");
-	  //console.log(sch);
-	  $.ajax({
-		  type:"post",
-		  url:"${path}/gantt.do?method=update&no="+'${no}',
-		  data:sch,
-		  dataType:"json",
-		  success:function(data){
-			  if(data.success=="Y"){
-				  alert("수정 완료");  
-				  console.log(data.gantt);
-				  g = data.gantt;
-					var tes = data.gantt.substring(8,data.gantt.length-1);
-					//console.log(data.gantt);
-					console.log(tes);
-					
-					var arrayList = new Array(tes);
-					holder = [];
-					var j = JSON.parse(tes);
-					for(var i=0;i<j.length;i++){
-						holder.push(j[i].holder);
-						if("${mem.name}" == j[i].holder){
-							tid.push(Number(j[i].id));	
-						}
-						arrstart_date.push(Convertdate(j[i].start_date));
-						arrend_date.push(Convertdate(j[i].end_date));
-						//leftLimit = getFormatDate(arrstart_date);
-						//rightLimit = getFormatDate(arrend_date[0]);
-						
-						//console.log(arrstart_date[i]);
-						//console.log(arrend_date[i]);
 					}
 					leftLimit = arrstart_date[0];
 					rightLimit = arrend_date[0];
@@ -716,12 +406,7 @@ var names = [];
 	}
 		
 	function insertCall(id,item){
-		console.log("###insertCall###");	
-		console.log(id);
-		console.log(item);
 	  	var sch = newSch(item);
-	  //console.log("##return ins Sch##");
-	  //console.log(sch);
 	  
 	  $.ajax({
 		  type:"post",
@@ -731,12 +416,8 @@ var names = [];
 		  success:function(data){
 			  if(data.success=="Y"){
 				  alert("등록 완료");  
-				  console.log(data.gantt);
 				  g = data.gantt;
 					var tes = data.gantt.substring(8,data.gantt.length-1);
-					//console.log(data.gantt);
-					console.log(tes);
-					
 					var arrayList = new Array(tes);
 					holder = [];
 					var j = JSON.parse(tes);
@@ -747,11 +428,6 @@ var names = [];
 						}
 						arrstart_date.push(Convertdate(j[i].start_date));
 						arrend_date.push(Convertdate(j[i].end_date));
-						//leftLimit = getFormatDate(arrstart_date);
-						//rightLimit = getFormatDate(arrend_date[0]);
-						
-						//console.log(arrstart_date[i]);
-						//console.log(arrend_date[i]);
 					}
 					leftLimit = arrstart_date[0];
 					rightLimit = arrend_date[0];
@@ -770,10 +446,7 @@ var names = [];
 	  });
 	};
 	  function deleteTask(id){
-		  //var task = gantt.getTask(id);
-		  console.log("###delete###");
-		  console.log(id);
-		  
+
 		  $.ajax({
 			  type:"post",
 			  url:"gantt.do?method=delete&no="+'${no}',
@@ -781,13 +454,9 @@ var names = [];
 			  dataType:"json",
 			  success:function(data){
 				  if(data.success=="Y"){
-					  alert("삭제 완료");  
-					  console.log(data.gantt);
+					  alert("삭제 완료");
 					  g = data.gantt;
 						var tes = data.gantt.substring(8,data.gantt.length-1);
-						//console.log(data.gantt);
-						console.log(tes);
-						
 						var arrayList = new Array(tes);
 						holder = [];
 						var j = JSON.parse(tes);
@@ -798,11 +467,6 @@ var names = [];
 							}
 							arrstart_date.push(Convertdate(j[i].start_date));
 							arrend_date.push(Convertdate(j[i].end_date));
-							//leftLimit = getFormatDate(arrstart_date);
-							//rightLimit = getFormatDate(arrend_date[0]);
-							
-							//console.log(arrstart_date[i]);
-							//console.log(arrend_date[i]);
 						}
 						leftLimit = arrstart_date[0];
 						rightLimit = arrend_date[0];
@@ -821,10 +485,8 @@ var names = [];
 		  });
 	  }
 	 
-	// is_new == true 일 때, 빈 데이터 채우기
+	// 등록 시 호출
 	function newSch(gantt){
-		console.log("###newSch###");
-		console.log(gantt);
 		var sch = {}; var tmp_start; var tmp_end;
 	  sch.title = gantt.title;
 	  sch.parent = gantt.parent;
@@ -847,10 +509,9 @@ var names = [];
 	  
 	  return sch;
 	}
-
+	// 수정 시 호출
 	function callSch(gantt){
-		console.log("###callSch###");
-		console.log(gantt);console.log(gantt.id);
+
 	  var sch = {}; var tmp_start; var tmp_end;
 	  sch.title = gantt.title;
 	  if(gantt.id == 1) sch.parent = "0";
@@ -871,38 +532,10 @@ var names = [];
 	  sch.holder = gantt.holder;
 	  sch.priority = Number(gantt.priority);
 	  sch.status = gantt.status;
-	  console.log("#########convert##########");
-	  console.log(sch.start_date);
-	  console.log(sch.end_date);
+
 	  return sch;
 	}
 	
-	function callSch2(id,parent,task){
-		console.log("###2callSch2###");
-		console.log(id);console.log(parent);console.log(task);
-	  var sch = {}; var tmp_start; var tmp_end;
-	  sch.title = task.title;
-	  sch.parent = parent;
-	  sch.progress = task.progress;
-	  sch.sortorder = task.sortorder; 
-	  sch.id = task.id;	
-	  sch.text = task.text;
-	  
-	  tmp_start = task.start_date; 
-	  tmp_start.setHours(tmp_start.getHours() + 9);
-	  sch.start_date = tmp_start.toISOString();
-	  
-	  tmp_end = task.end_date;
-	  tmp_end.setHours(tmp_end.getHours() + 9);
-	  sch.end_date = tmp_end.toISOString();
-	  
-	  sch.holder = task.holder;
-	  sch.priority = Number(task.priority);
-	  console.log("#########convert##########");
-	  console.log(sch.start_date);
-	  console.log(sch.end_date);
-	  return sch;
-	}
 	/*
 	function formatDate(date){
 		var d = new Date(date),
@@ -957,29 +590,6 @@ html, body {
 	padding: 0px;
 	margin: 0px;
 	height: 100%;
-}
-.fa {
-  cursor: pointer;
-  font-size: 14px;
-  text-align: center;
-  opacity: 0.2;
-  padding: 5px;
-}
-
-.fa:hover {
-  opacity: 1;
-}
-
-.fa-pencil {
-  color: #ffa011;
-}
-
-.fa-plus {
-  color: #328EA0;
-}
-
-.fa-times {
-  color: red;
 }
 
 .gantt_grid_head_add {

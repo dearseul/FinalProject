@@ -204,7 +204,7 @@
  	  		$("#searchBtn").click(function(){
  	  			shName = $("[name=shName]").val();
  	  			console.log(shName);
- 	  			location.href="${path}/manpower.do?method=contacts_list&name="+name;
+ 	  			location.href="${path}/manpower.do?method=contacts_list&name="+shName;
 	  		}) 
 	  		
 	  		//////////// 계정 생성 모달
